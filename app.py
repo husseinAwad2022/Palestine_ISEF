@@ -22,8 +22,9 @@ def home():
 @app.route('/classify', methods=['GET'])
 def classify_image():
     image_path = request.args.get('image_path')
-    if not image_path or not os.path.exists(image_path):
-        return jsonify({"error": "Invalid or missing image path"}), 400
+    
+    # if not image_path or not os.path.exists(image_path):
+    #     return jsonify({"error": "Invalid or missing image path"}), 400
 
     # Load and preprocess image for the wound classifier
     image = Image.open(image_path).convert('RGB')
