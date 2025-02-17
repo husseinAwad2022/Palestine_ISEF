@@ -1,7 +1,8 @@
 import os
 from flask import Flask, request, jsonify
 from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing import image
+from tensorflow.keras.preprocessing import image as keras_image
+from PIL import Image
 import numpy as np
 
 # Initialize Flask app
@@ -23,21 +24,21 @@ def home():
 def classify_image():
     image_path = request.args.get('image_path')
     
-    # if not image_path or not os.path.exists(image_path):
-    #     return jsonify({"error": "Invalid or missing image path"}), 400
+    if not image_path or not os.path.exists(image_path):
+        return jsonify({"error": "Invalid or missing image path"}), 400
 
     # Load and preprocess image for the wound classifier
-    image = Image.open(image_path).convert('RGB')
-    image = image.resize((224, 224))
-    image_array = np.array(image) / 255.0
-    image_array = np.expand_dims(image_array, axis=0)
+    img = Image.open(image_path).convert('RGB')
+    img = img.resize((224, 224))
+    img_array = np.array(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
     
     # Predict using Keras model
-    predictions = model.predict(image_array)
+    predictions = model.predict(img_array)
     predicted_class = np.argmax(predictions)
     result = wound_labels[predicted_class]
     
     return jsonify({"image": image_path, "prediction": result})
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0' , port=5000)
+    app.run(port=5000, host='0.0.0.0')
