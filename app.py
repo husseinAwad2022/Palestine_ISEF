@@ -19,31 +19,24 @@ model = load_model(covid_model_path)
 def home():
     return "Wound Classifier API is running"
 
-@app.route('/classify', methods=['POST'])
+@app.route('/classify', methods=['GET'])
 def classify_image():
-    if 'image' not in request.files:
-        return jsonify({"error": "No image provided"}), 400
+    image_path = request.args.get('image_path')
+    if not image_path or not os.path.exists(image_path):
+        return jsonify({"error": "Invalid or missing image path"}), 400
 
-    img_file = request.files['image']
-
-    try:
-        # Load and preprocess the image
-        img = image.load_img(img_file, target_size=(224, 224))  # Adjust size if needed
-        img_array = image.img_to_array(img) / 255.0
-        img_array = np.expand_dims(img_array, axis=0)
-
-        # Predict the class
-        predictions = model.predict(img_array)
-        predicted_class = wound_labels[np.argmax(predictions)]
-        confidence = float(np.max(predictions))
-
-        return jsonify({
-            "predicted_class": predicted_class,
-            "confidence": confidence
-        })
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    # Load and preprocess image for the wound classifier
+    image = Image.open(image_path).convert('RGB')
+    image = image.resize((224, 224))
+    image_array = np.array(image) / 255.0
+    image_array = np.expand_dims(image_array, axis=0)
+    
+    # Predict using Keras model
+    predictions = model.predict(image_array)
+    predicted_class = np.argmax(predictions)
+    result = wound_labels[predicted_class]
+    
+    return jsonify({"image": image_path, "prediction": result})
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0' , port=5000)
